@@ -12,15 +12,19 @@ http.createServer( async (req, res) => {
 
   let response = {status: 404, error: "Page not found"};
 
-  if(method === 'GET'){
-    if(url === '/about'){
-      response = {title: 'about us page!!!'};
-    } else if (url === '/users') {
-      response = await db.getUsers(req,res);
+  try {
+    if(method === 'GET'){
+      if(url === '/about'){
+        response = {title: 'about us page!!!'};
+      } else if (url === '/users') {
+        response = await db.getUsers(req,res);
+      }
     }
+  } catch(error) {
+    response.error = error;
   }
 
-  console.log('FINISH: ',method,url, response.status, response.data);
+  console.log('FINISH: ', method, url, response);
 
   res.writeHead(response.status, {'Content-Type': 'application/json'});
 
