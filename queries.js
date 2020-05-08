@@ -8,7 +8,7 @@ const pool = new Pool({
 })
 
 
-const getUsers = async (request, response) => {
+const getUsers = async () => {
   const results = await pool.query('SELECT * FROM users ORDER BY id ASC')
   return {status: 200, data: results.rows};
 }
