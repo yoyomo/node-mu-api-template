@@ -1,24 +1,30 @@
 const http = require('http');
-const { Client } = require('pg');
-const client = new Client();
-
+const db = require('./queries')
 
 const PORT = process.env.PORT || 3000;
 
-http.createServer( (req, res) => {
-
-  res.writeHead(200, {'Content-Type': 'application/json'});
+http.createServer( async (req, res) => {
 
   const url = req.url;
+  const method = req.method;
 
-  if(url === '/about'){
-    res.write(JSON.stringify({title: 'about us page!!!'}));
-  } else if (url === '/pg') {
-    await client.connect();
-    const response = await client.query('SELECT $1::text as message', ['Hellow world!'])
-    res.write(response.rows[0].message);
-    await client.end()
+  console.log('START: ',method,url);
+
+  let response = {status: 404, error: "Page not found"};
+
+  if(method === 'GET'){
+    if(url === '/about'){
+      response = {title: 'about us page!!!'};
+    } else if (url === '/users') {
+      response = await db.getUsers(req,res);
+    }
   }
+
+  console.log('FINISH: ',method,url, response.status, response.data);
+
+  res.writeHead(response.status, {'Content-Type': 'application/json'});
+
+  res.write(JSON.stringify(response));
 
   res.end();
 
