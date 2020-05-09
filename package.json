@@ -2,15 +2,16 @@
   "name": "node-mu-template",
   "version": "0.1.0",
   "description": "Model Update template for Node",
-  "main": "index.js",
+  "main": "index.mjs",
   "author": "Armando J. Ortiz",
   "license": "MIT",
   "engines": {
-    "node": "8.8.1"
+    "node": ">=14.2.0"
   },
+  "type": "module",
   "scripts": {
-    "start": "node index.js",
-    "dev": "./node_modules/nodemon/bin/nodemon.js index.js"
+    "start": "node index.mjs",
+    "dev": "./node_modules/nodemon/bin/nodemon.js index.mjs"
   },
   "devDependencies": {
     "nodemon": "^2.0.3"
