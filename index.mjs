@@ -1,12 +1,14 @@
 import http from 'http';
-import URL  from 'url';
+import URL from 'url';
 
-import db from './db/queries.mjs';
+import db from './db/core/queries.mjs';
 import colors from './utils/colors.mjs';
+
+import {tables} from './db/resources.mjs';
 
 const PORT = process.env.PORT || 1234;
 
-const query = db.connect();
+const query = db.connect(tables);
 
 http.createServer(async (req, res) => {
 
@@ -15,22 +17,33 @@ http.createServer(async (req, res) => {
 
   let response = { status: 404, error: "Page not found" };
 
-  try {
-    if (url.pathname === '/users') {
-      response = await query('users')[method](url.query.id);
+  let bufferedData = [];
+
+  req.on('data', buffer => {
+    bufferedData.push(buffer)
+  }).on('end', async () => {
+    try {
+      const data = JSON.parse(Buffer.concat(bufferedData).toString() || "[]");
+
+      //TODO create routes for controllers/update
+      const path = url.pathname.split('/');
+      const table = path[1];
+
+      response = await query(table)[method](url.query, data);
+
+    } catch (error) {
+      console.error(error);
+      response = { status: 500, error: error.message };
     }
-  } catch (error) {
-    response.error = error.message;
-  }
 
-  console.log(`${colors.cyan}%s${colors.reset} %s %s %O`, new Date(), method, url.path, response);
+    console.log(`${colors.cyan}%s${colors.reset} %s %s %O`, new Date(), method, url.path, response);
 
-  res.writeHead(response.status, { 'Content-Type': 'application/json' });
+    res.writeHead(response.status, { 'Content-Type': 'application/json' });
 
-  res.write(JSON.stringify(response));
+    res.write(JSON.stringify(response));
 
-  res.end();
-
+    res.end();
+  })
 }).listen(PORT, () => {
   console.log(`${colors.bright}server listening at port ${PORT}${colors.reset}`)
 });

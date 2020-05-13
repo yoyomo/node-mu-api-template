@@ -1,11 +1,11 @@
-import dbTools from './tools.mjs';
+import dbCommands from './core/commands.mjs';
 
 const args = process.argv.slice(2);
-const tool = args[0];
+const command = args[0];
 
-if(!tool) {
+if(!command) {
   console.warn('USAGE: node db [init|uninit|create|drop|migrate|rollback]')
   process.exit(1);
 }
 
-dbTools[tool]();
+dbCommands[command]();
