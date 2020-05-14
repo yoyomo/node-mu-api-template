@@ -1,7 +1,7 @@
 {
-  "name": "node-mu-template",
+  "name": "node-mu-api-template",
   "version": "0.1.0",
-  "description": "Model Update template for Node",
+  "description": "Model Update API template for Node",
   "main": "index.mjs",
   "author": "Armando J. Ortiz",
   "license": "MIT",
