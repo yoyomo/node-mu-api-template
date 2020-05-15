@@ -1,2 +1,3 @@
 node_modules
-node-mu.env
+mu-api.env
+db/migrate/*
