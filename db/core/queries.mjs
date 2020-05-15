@@ -3,7 +3,7 @@ import { initDB } from './commands.mjs';
 export default {
   connect: (tables) => {
 
-    const db = initDB(process.env.DATABASE_NAME);
+    const db = initDB();
 
     return table => {
       if (!tables[table]) throw {message: `Table "${table}" does not exist.`}

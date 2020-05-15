@@ -19,10 +19,10 @@ const DBUserConfig = {
   password: process.env.DATABASE_PASSWORD,
 }
 
-export const initDB = (databaseName = 'postgres') => (
+export const initDB = (databaseName) => (
   new pg.Pool({
     ...DBUserConfig,
-    database: databaseName,
+    database: databaseName || process.env.DATABASE_NAME,
   })
 )
 
@@ -56,7 +56,7 @@ export default {
   create: async () => {
     console.log('Creating database "' + process.env.DATABASE_NAME + '"...');
 
-    transaction(initDB(), async db => {
+    transaction(initDB(DBHeadConfig.database), async db => {
       await db.query('CREATE DATABASE "' + process.env.DATABASE_NAME + '";')
       console.log('Successfully created database "' + process.env.DATABASE_NAME + '"!');
     })
@@ -64,32 +64,32 @@ export default {
   drop: async () => {
     console.log('Dropping database "' + process.env.DATABASE_NAME + '"...');
 
-
-    transaction(initDB(), async db => {
+    transaction(initDB(DBHeadConfig.database), async db => {
       await db.query('DROP DATABASE "' + process.env.DATABASE_NAME + '";');
       console.log('Database "' + process.env.DATABASE_NAME + '" has been dropped.')
     });
   },
   migrate: async () => {
-    console.log('Migrating "' + process.env.DATABASE_NAME + '"...');
+    console.log('Migrating new files...');
 
-    transaction(initDB(process.env.DATABASE_NAME), async db => {
+    transaction(initDB(), async db => {
       await db.query('CREATE TABLE IF NOT EXISTS "migrations" (ts timestamp, created_at timestamp);');
 
       const pastMigrations = (await db.query('SELECT EXTRACT(EPOCH from ts)::integer as ts from "migrations"')).rows.map(m => m.ts);
 
       let newMigrationFiles = [];
 
-      const filenames = await readDirectory('./db/migrate');
+      const migrationDirectories = await readDirectory('./db/migrate');
 
-      for (let filename of filenames) {
-        const timestamp = parseInt(filename.split('-')[0]);
+      for (let migrationDirectory of migrationDirectories) {
+
+        const timestamp = parseInt(migrationDirectory.split('-')[0]);
 
         if (pastMigrations.includes(timestamp)) continue;
 
-        newMigrationFiles.push(filename);
+        newMigrationFiles.push(migrationDirectory);
 
-        const sql = await readFile(`./db/migrate/${filename}`, 'utf-8');
+        const sql = await readFile(`./db/migrate/${migrationDirectory}/up.sql`, 'utf-8');
 
         await db.query(sql)
 
@@ -103,8 +103,28 @@ export default {
     });
 
   },
+  rollback: async() => {
+    console.log('Rolling back last migration ...');
+
+    transaction(initDB(), async db => {
+
+      const lastMigration = (await readDirectory('./db/migrate')).slice(-1)[0];
+
+      const timestamp = parseInt(lastMigration.split('-')[0]);
+
+      const sql = await readFile(`./db/migrate/${lastMigration}/down.sql`, 'utf-8');
+
+      await db.query(sql);
+
+      await db.query('DELETE FROM "migrations" WHERE ts = timezone(\'utc\', to_timestamp($1))', [timestamp])
+
+      console.log('Rolled back: ', lastMigration)
+
+    });
+
+  },
   generate: async (options) => {
-    transaction(initDB(process.env.DATABASE_NAME), async db => {
+    transaction(initDB(), async db => {
 
       const subcommands = {
         migration: async (migrationName) => {
@@ -112,12 +132,13 @@ export default {
 
           const now = (await db.query('SELECT EXTRACT(EPOCH from timezone(\'utc\', now()))::integer as ts')).rows[0].ts;
 
-          const migrationFilename = `./db/migrate/${now}-${migrationName}.sql`
+          const migrationDirectory = `./db/migrate/${now}-${migrationName}`
 
-          await mkdir('./db/migrate', { recursive: true });
-          await writeFile(migrationFilename, '');
+          await mkdir(migrationDirectory, { recursive: true });
+          await writeFile(`${migrationDirectory}/up.sql`, '');
+          await writeFile(`${migrationDirectory}/down.sql`, '');
 
-          console.log(`Created migration file ${migrationFilename}`);
+          console.log(`Created migration files for ${migrationDirectory}`);
         }
       }
 
