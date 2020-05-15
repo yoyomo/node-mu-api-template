@@ -13,11 +13,13 @@ cd mu-api
 And then `npm start` or, `npm run dev`.
 
 ### Requirements
-Postgresql: 
+- Postgresql: 
 ```bash
 brew install postgresql
 brew services start postgresql
 ```
+
+- Node
 
 ### Basics
 The Api basically works by using:
