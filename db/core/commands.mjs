@@ -103,7 +103,7 @@ export default {
     });
 
   },
-  rollback: async() => {
+  rollback: async () => {
     console.log('Rolling back last migration ...');
 
     transaction(initDB(), async db => {
@@ -148,5 +148,18 @@ export default {
 
       await subcommands[subcommand](options[1])
     })
+  },
+  seed: async () => {
+    console.log('Running seeds...');
+
+    transaction(initDB(), async db => {
+
+      const sql = await readFile(`./db/seeds.sql`, 'utf-8');
+
+      await db.query(sql);
+
+      console.log('Seeds generated!');
+    });
+
   }
 }

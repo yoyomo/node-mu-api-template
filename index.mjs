@@ -4,7 +4,7 @@ import URL from 'url';
 import db from './db/core/queries.mjs';
 import colors from './utils/colors.mjs';
 
-import {tables} from './db/resources.mjs';
+import { tables } from './db/resources.mjs';
 
 const PORT = process.env.PORT || 1234;
 
@@ -23,13 +23,15 @@ http.createServer(async (req, res) => {
     bufferedData.push(buffer)
   }).on('end', async () => {
     try {
-      const data = JSON.parse(Buffer.concat(bufferedData).toString() || "[]");
+      const data = JSON.parse(Buffer.concat(bufferedData).toString() || "{}");
 
-      //TODO create routes for controllers/update
       const path = url.pathname.split('/');
       const table = path[1];
+      const id = path[2];
 
-      response = await query(table)[method](url.query, data);
+      //TODO create routes for controllers/update
+
+      response = await query(table)[method]({ ...url.query, id: id }, data);
 
     } catch (error) {
       console.error(error);
