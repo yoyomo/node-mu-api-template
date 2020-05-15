@@ -26,7 +26,7 @@ import db from './db/core/queries.mjs';
 
 const query = db.connect(tables);
 
-response = await query(table)[method]({ ...url.query, id: id }, data);
+response = await query(table)[method](url.query, data);
 
 ```
 
