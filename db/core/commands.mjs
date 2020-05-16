@@ -145,7 +145,7 @@ export default {
             `CREATE TABLE "${modelName}" (\n` +
             `  id SERIAL,\n` +
             `  created_at timestamp,\n` +
-            `  updated_at timestamp,\n` +
+            `  updated_at timestamp\n` +
             `)`+
               ``;
           const downSQL = `DROP TABLE "${modelName}";`;
