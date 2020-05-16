@@ -5,10 +5,9 @@ export default {
 
     const db = initDB();
 
-    return model => {
+    const queries = model => {
       if (!models[model]) throw {message: `Table "${model}" does not exist.`}
-      return {
-        update: () => models[model].update(db),
+      const generalQueries = {
         GET: async (params) => {
           let result = { rows: [] };
           if (params && params.id) {
@@ -63,6 +62,13 @@ export default {
           return { status: 200, data: result.rows };
         },
       }
+
+      return {
+        update: () => models[model].update(db, queries),
+        ...generalQueries
+      }
     }
+
+    return queries;
   }
 }

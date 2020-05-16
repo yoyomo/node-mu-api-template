@@ -15,6 +15,8 @@ http.createServer(async (req, res) => {
   const url = URL.parse(req.url, true);
   const method = req.method;
 
+  console.log(`${colors.cyan}%s${colors.reset} Starting %s %s...`, new Date(), method, url.path);
+
   let response = { status: 404, error: "Page not found" };
 
   let bufferedData = [];
@@ -31,9 +33,9 @@ http.createServer(async (req, res) => {
       const id = path[2] && path[2].split('/')[1];
       const update = path[3] && path[3].split('/')[1];
 
-      if(update){
-        response = await db(model).update()[method][update]({...url.query, id: id}, data);
-      }else {
+      if (update) {
+        response = await db(model).update()[method][update]({ ...url.query, id: id }, data);
+      } else {
         response = await db(model)[method]({ ...url.query, id: id }, data);
       }
 

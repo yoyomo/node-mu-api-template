@@ -159,7 +159,7 @@ export default {
           `    model: {\n`+
           `      ...Model,\n`+
           `    },\n`+
-          `    update: (db) => ({\n`+
+          `    update: (db, queries) => ({\n`+
           `    })\n`+
           `  }\n`+
           `}`
