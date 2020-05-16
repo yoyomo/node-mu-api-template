@@ -49,13 +49,24 @@ node db seed # runs the seeds file under ./db/seed.sql
 
 #### Generate Migrations
 ```bash
-node db generate migration create_users
+node db generate migration create_notes
 ```
-and then edit the generated SQL file under `db/migrate`. Now `node db migrate` should do something!
+or better yet,
+```bash
+node db generate model notes
+```
+
+and then edit the generated SQL file under `db/migrate` and the resource file under `./db/resources/notes.mjs`. Now `node db migrate` should do something!
 
 #### Undo's
 ```bash
 node db rollback # undos last migration under db/migrate/[timestamp]-*/down.sql
 node db drop # drops database
 node db uninit # deletes user
+```
+
+### Console
+A custom console that has access to the database functions is available through:
+```bash
+npm run console
 ```
