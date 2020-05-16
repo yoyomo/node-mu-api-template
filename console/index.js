@@ -3,7 +3,7 @@ import pg from 'pg';
 import dbCommands from '../db/core/commands.mjs';
 import DB from '../db/core/queries.mjs';
 
-import { models } from '../db/resources.mjs';
+import { models } from '../db/resources/index.mjs';
 
 const db = DB.connect(models);
 
