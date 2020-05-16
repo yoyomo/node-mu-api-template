@@ -144,8 +144,8 @@ export default {
           const upSQL =
             `CREATE TABLE "${modelName}" (\n` +
             `  id SERIAL,\n` +
-            `  created_at timestamp,\n` +
-            `  updated_at timestamp\n` +
+            `  created_at timestamp default timezone('utc',now()),\n` +
+            `  updated_at timestamp default timezone('utc',now())\n` +
             `)`+
               ``;
           const downSQL = `DROP TABLE "${modelName}";`;

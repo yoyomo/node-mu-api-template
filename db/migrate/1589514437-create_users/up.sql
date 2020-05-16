@@ -1,7 +1,7 @@
 CREATE TABLE "users" (
   id serial,
-  created_at timestamp,
-  updated_at timestamp,
+  created_at timestamp default timezone('utc',now()),
+  updated_at timestamp default timezone('utc',now()),
   name text,
   age int
 );

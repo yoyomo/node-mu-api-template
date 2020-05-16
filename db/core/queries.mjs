@@ -47,14 +47,12 @@ export default {
         },
         PATCH: async(params, data) => {
 
-          let sql = `UPDATE "${model}" SET`;
+          let sql = `UPDATE "${model}" SET updated_at=timezone('utc', now())`;
           let inputs = [];
           Object.keys(data).map((attr, i) => {
             if(!(attr in models[model].model)) throw {message: `Invalid parameter: "${attr}" in table "${model}"`};
 
-            if(i > 0){
-              sql += ','
-            }
+            sql += ','
             sql += ` ${attr} = $${i+1}`;
             inputs.push(data[attr])
           })
