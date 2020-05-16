@@ -8,20 +8,20 @@ export default {
     return table => {
       if (!tables[table]) throw {message: `Table "${table}" does not exist.`}
       return {
-        GET: async ({id}) => {
+        GET: async (query) => {
           let result = { rows: [] };
-          if (id) {
-            result = await db.query('SELECT * FROM "' + table + '" WHERE id = $1 LIMIT 1', [id])
+          if (query && query.id) {
+            result = await db.query('SELECT * FROM "' + table + '" WHERE id = $1 LIMIT 1', [query.id])
           } else {
             result = await db.query('SELECT * FROM "' + table + '" ORDER BY id ASC')
           }
           return { status: 200, data: result.rows };
         },
-        DELETE: async ({id}) => {
-          const result = await db.query(`DELETE FROM "${table}" WHERE id = $1 RETURNING *`, [id]);
+        DELETE: async (query) => {
+          const result = await db.query(`DELETE FROM "${table}" WHERE id = $1 RETURNING *`, [query.id]);
           return {status: 200, data: result.rows};
         },
-        POST: async ({}, data) => {
+        POST: async (_query, data) => {
 
           let sql = `INSERT INTO "${table}" (`;
           let sqlValues = ' VALUES ('
@@ -44,7 +44,7 @@ export default {
           const result = await db.query(sql, inputs);
           return {status: 201, data: result.rows};
         },
-        PATCH: async({id}, data) => {
+        PATCH: async(query, data) => {
 
           let sql = `UPDATE "${table}" SET`;
           let inputs = [];
@@ -58,7 +58,7 @@ export default {
             inputs.push(data[attr])
           })
           sql += ` WHERE id = $${inputs.length+1} RETURNING *`;
-          inputs.push(id);
+          inputs.push(query.id);
 
           const result = await db.query(sql, inputs);
           return { status: 200, data: result.rows };

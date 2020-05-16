@@ -12,7 +12,8 @@
   "scripts": {
     "start": "node index.mjs",
     "dev": "./node_modules/nodemon/bin/nodemon.js index.mjs",
-    "db": "node db"
+    "db": "node db",
+    "console": "node --experimental-repl-await console"
   },
   "dependencies": {
     "pg": "^8.0.3"
