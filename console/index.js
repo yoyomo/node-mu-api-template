@@ -1,21 +1,17 @@
 import repl from 'repl';
 import pg from 'pg';
 import dbCommands from '../db/core/commands.mjs';
-import db from '../db/core/queries.mjs';
+import DB from '../db/core/queries.mjs';
 
-import { tables } from '../db/resources.mjs';
+import { models } from '../db/resources.mjs';
 
-const query = db.connect(tables);
+const db = DB.connect(models);
 
-const main = async () => {
-  let console = repl.start({ prompt: '% ' });
+let console = repl.start({ prompt: '% ' });
 
-  console.context.pg = pg;
-  console.context.dbCommands = dbCommands;
-  console.context.tables = tables;
-  console.context.query = query;
+console.context.pg = pg;
+console.context.dbCommands = dbCommands;
+console.context.models = models;
+console.context.db = db;
 
-  console.setupHistory('./console/.history', () => {});
-}
-
-main();
+console.setupHistory('./console/.history', () => { });

@@ -1,4 +1,4 @@
-import pg from 'pg'
+import pg from 'pg';
 import fs from 'fs';
 import util from 'util';
 

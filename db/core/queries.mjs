@@ -1,33 +1,34 @@
 import { initDB } from './commands.mjs';
 
 export default {
-  connect: (tables) => {
+  connect: (models) => {
 
     const db = initDB();
 
-    return table => {
-      if (!tables[table]) throw {message: `Table "${table}" does not exist.`}
+    return model => {
+      if (!models[model]) throw {message: `Table "${model}" does not exist.`}
       return {
-        GET: async (query) => {
+        update: () => models[model].update(db),
+        GET: async (params) => {
           let result = { rows: [] };
-          if (query && query.id) {
-            result = await db.query('SELECT * FROM "' + table + '" WHERE id = $1 LIMIT 1', [query.id])
+          if (params && params.id) {
+            result = await db.query('SELECT * FROM "' + model + '" WHERE id = $1 LIMIT 1', [params.id])
           } else {
-            result = await db.query('SELECT * FROM "' + table + '" ORDER BY id ASC')
+            result = await db.query('SELECT * FROM "' + model + '" ORDER BY id ASC')
           }
           return { status: 200, data: result.rows };
         },
-        DELETE: async (query) => {
-          const result = await db.query(`DELETE FROM "${table}" WHERE id = $1 RETURNING *`, [query.id]);
+        DELETE: async (params) => {
+          const result = await db.query(`DELETE FROM "${model}" WHERE id = $1 RETURNING *`, [params.id]);
           return {status: 200, data: result.rows};
         },
-        POST: async (_query, data) => {
+        POST: async (_params, data) => {
 
-          let sql = `INSERT INTO "${table}" (`;
+          let sql = `INSERT INTO "${model}" (`;
           let sqlValues = ' VALUES ('
           let inputs = [];
           Object.keys(data).map((attr, i) => {
-            if(!(attr in tables[table])) throw {message: `Invalid parameter: "${attr}" in table "${table}"`};
+            if(!(attr in models[model].model)) throw {message: `Invalid parameter: "${attr}" in table "${model}"`};
 
             if(i > 0){
               sql += ','
@@ -44,12 +45,12 @@ export default {
           const result = await db.query(sql, inputs);
           return {status: 201, data: result.rows};
         },
-        PATCH: async(query, data) => {
+        PATCH: async(params, data) => {
 
-          let sql = `UPDATE "${table}" SET`;
+          let sql = `UPDATE "${model}" SET`;
           let inputs = [];
           Object.keys(data).map((attr, i) => {
-            if(!(attr in tables[table])) throw {message: `Invalid parameter: "${attr}" in table "${table}"`};
+            if(!(attr in models[model].model)) throw {message: `Invalid parameter: "${attr}" in table "${model}"`};
 
             if(i > 0){
               sql += ','
@@ -58,7 +59,7 @@ export default {
             inputs.push(data[attr])
           })
           sql += ` WHERE id = $${inputs.length+1} RETURNING *`;
-          inputs.push(query.id);
+          inputs.push(params.id);
 
           const result = await db.query(sql, inputs);
           return { status: 200, data: result.rows };

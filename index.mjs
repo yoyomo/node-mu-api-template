@@ -1,14 +1,14 @@
 import http from 'http';
 import URL from 'url';
 
-import db from './db/core/queries.mjs';
+import DB from './db/core/queries.mjs';
 import colors from './utils/colors.mjs';
 
-import { tables } from './db/resources.mjs';
+import { models } from './db/resources/index.mjs';
 
 const PORT = process.env.PORT || 1234;
 
-const query = db.connect(tables);
+const db = DB.connect(models);
 
 http.createServer(async (req, res) => {
 
@@ -25,13 +25,17 @@ http.createServer(async (req, res) => {
     try {
       const data = JSON.parse(Buffer.concat(bufferedData).toString() || "{}");
 
-      const path = url.pathname.split('/');
-      const table = path[1];
-      const id = path[2];
+      const path = url.pathname.match(/\/([a-z]+)(\/[0-9]+)?(\/[a-zA-Z]+)?/);
 
-      //TODO create routes for controllers/update
+      const model = path[1];
+      const id = path[2] && path[2].split('/')[1];
+      const update = path[3] && path[3].split('/')[1];
 
-      response = await query(table)[method]({ ...url.query, id: id }, data);
+      if(update){
+        response = await db(model).update()[method][update]({...url.query, id: id}, data);
+      }else {
+        response = await db(model)[method]({ ...url.query, id: id }, data);
+      }
 
     } catch (error) {
       console.error(error);
