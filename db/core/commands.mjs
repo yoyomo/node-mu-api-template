@@ -1,11 +1,5 @@
 import pg from 'pg';
 import fs from 'fs';
-import util from 'util';
-
-const readDirectory = util.promisify(fs.readdir);
-const readFile = util.promisify(fs.readFile);
-const writeFile = util.promisify(fs.writeFile);
-const mkdir = util.promisify(fs.mkdir);
 
 const DBHeadConfig = {
   host: process.env.DATABASE_HOST,
@@ -79,7 +73,7 @@ export default {
 
       let newMigrationFiles = [];
 
-      const migrationDirectories = await readDirectory('./db/migrate');
+      const migrationDirectories = fs.readdirSync('./db/migrate');
 
       for (let migrationDirectory of migrationDirectories) {
 
@@ -89,7 +83,7 @@ export default {
 
         newMigrationFiles.push(migrationDirectory);
 
-        const sql = await readFile(`./db/migrate/${migrationDirectory}/up.sql`, 'utf-8');
+        const sql = fs.readFileSync(`./db/migrate/${migrationDirectory}/up.sql`, 'utf-8');
 
         await db.query(sql)
 
@@ -108,11 +102,11 @@ export default {
 
     transaction(initDB(), async db => {
 
-      const lastMigration = (await readDirectory('./db/migrate')).slice(-1)[0];
+      const lastMigration = (fs.readdirSync('./db/migrate')).slice(-1)[0];
 
       const timestamp = parseInt(lastMigration.split('-')[0]);
 
-      const sql = await readFile(`./db/migrate/${lastMigration}/down.sql`, 'utf-8');
+      const sql = fs.readFileSync(`./db/migrate/${lastMigration}/down.sql`, 'utf-8');
 
       await db.query(sql);
 
@@ -126,25 +120,66 @@ export default {
   generate: async (options) => {
     transaction(initDB(), async db => {
 
+      const generateMigration = async (migrationName, upSQL = '', downSQL = '') => {
+        if (!migrationName) throw { message: 'USAGE: node db generate migration FILENAME' };
+
+        const now = (await db.query('SELECT EXTRACT(EPOCH from timezone(\'utc\', now()))::integer as ts')).rows[0].ts;
+
+        const migrationDirectory = `./db/migrate/${now}-${migrationName}`
+
+        fs.mkdirSync(migrationDirectory, { recursive: true });
+        fs.writeFileSync(`${migrationDirectory}/up.sql`, upSQL);
+        fs.writeFileSync(`${migrationDirectory}/down.sql`, downSQL);
+
+        console.log(`Created migration files for ${migrationDirectory}`);
+      }
+
       const subcommands = {
-        migration: async (migrationName) => {
-          if (!migrationName) throw { message: 'USAGE: node db generate migration FILENAME' };
+        migration: generateMigration,
+        model: async (modelName) => {
+          if (!modelName) throw { message: 'USAGE: node db generate model MODEL_NAME' };
+          
+          if(fs.existsSync(`./db/resources/${modelName}.mjs`)) throw {message: `Resource ${modelName} already exists.`}
 
-          const now = (await db.query('SELECT EXTRACT(EPOCH from timezone(\'utc\', now()))::integer as ts')).rows[0].ts;
+          const upSQL =
+            `CREATE TABLE "${modelName}" (\n` +
+            `  id SERIAL,\n` +
+            `  created_at timestamp,\n` +
+            `  updated_at timestamp,\n` +
+            `)`+
+              ``;
+          const downSQL = `DROP TABLE "${modelName}";`;
+          const migrationName = `create_${modelName}`;
+          await generateMigration(migrationName, upSQL, downSQL);
 
-          const migrationDirectory = `./db/migrate/${now}-${migrationName}`
+          fs.writeFileSync(`./db/resources/${modelName}.mjs`,
+          `import {Model} from './model.mjs';\n\n`+
+          `export const ${modelName}Model = {\n`+
+          `  ${modelName}: {\n`+
+          `    model: {\n`+
+          `      ...Model,\n`+
+          `    },\n`+
+          `    update: (db) => ({\n`+
+          `    })\n`+
+          `  }\n`+
+          `}`
+          );
 
-          await mkdir(migrationDirectory, { recursive: true });
-          await writeFile(`${migrationDirectory}/up.sql`, '');
-          await writeFile(`${migrationDirectory}/down.sql`, '');
-
-          console.log(`Created migration files for ${migrationDirectory}`);
+          console.log(
+            `Generated model templates for ${modelName}.\n`+
+            `now you can go edit the new migration files under ./db/migrate\n`+
+            `and the new resource file under ./db/resources\n`+
+            `according to the model specs!\n\n`+
+            `Note:\n`+
+            `\tYou must run the migrations yourself,\n`+
+            `\t& include the new resource variable inside the 'models' under ./db/resources/index.mjs`
+          )
         }
       }
 
       const subcommand = options[0];
 
-      if (!subcommands[subcommand]) throw { message: 'USAGE: node db generate [migration] [options]' };
+      if (!subcommands[subcommand]) throw { message: 'USAGE: node db generate [migration|model] [options]' };
 
       await subcommands[subcommand](options[1])
     })
@@ -154,7 +189,7 @@ export default {
 
     transaction(initDB(), async db => {
 
-      const sql = await readFile(`./db/seeds.sql`, 'utf-8');
+      const sql = fs.readFileSync(`./db/seeds.sql`, 'utf-8');
 
       await db.query(sql);
 

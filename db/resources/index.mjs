@@ -1,5 +1,5 @@
-import {UsersModel} from './users.mjs';
+import {usersModel} from './users.mjs';
 
 export const models = {
-  ...UsersModel
+  ...usersModel
 }

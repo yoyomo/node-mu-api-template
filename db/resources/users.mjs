@@ -1,6 +1,6 @@
 import {Model} from './model.mjs';
 
-export const UsersModel = {
+export const usersModel = {
   users: {
     model: {
       ...Model,
